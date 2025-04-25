@@ -6,7 +6,7 @@ import Void from './void.js';
 export default function Main() {
     return (
         <>
-            <p>Main</p>
+            <p>Maina</p>
 
             <Text />
             <Void />
