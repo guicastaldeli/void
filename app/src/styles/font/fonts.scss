@@ -1,0 +1,25 @@
+/* Fonts */
+    $fonts: (
+        'cas': ('Cascadia Code', '/app/src/assets/fonts/CascadiaCode.ttf'),
+        'nus': ('Nunito Sans Normal', '/app/src/assets/fonts/NunitoSans_10pt_Condensed-Regular.ttf'),
+        'jet': ('JetBrains Mono Regular', '/app/src/assets/fonts/JetBrainsMonoNL-Regular.ttf'),
+        'sqr': ('Square Regular', '/app/src/assets/fonts/Square-Regular.otf'),
+        'vpp': ('VP Pixel Simplified', '/app/src/assets/fonts/VPPixel-Simplified.otf')
+    );
+
+    @each $key, $f in $fonts {
+        @font-face {
+            font-family: nth($f, 1);
+            src: url (nth($f, 2)) format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+    }
+/* */
+
+/* Global Vars */
+$cas-font: map-get($fonts, 'cas');
+$nus-font: map-get($fonts, 'nus');
+$jet-font: map-get($fonts, 'jet');
+$sqr-font: map-get($fonts, 'sqr');
+$vpp-font: map-get($fonts, 'vpp');

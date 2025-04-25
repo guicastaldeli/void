@@ -1,0 +1,33 @@
+/* Fonts */
+@font-face {
+  font-family: "Cascadia Code";
+  src: url "/app/src/assets/fonts/CascadiaCode.ttf" format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Nunito Sans Normal";
+  src: url "/app/src/assets/fonts/NunitoSans_10pt_Condensed-Regular.ttf" format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "JetBrains Mono Regular";
+  src: url "/app/src/assets/fonts/JetBrainsMonoNL-Regular.ttf" format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Square Regular";
+  src: url "/app/src/assets/fonts/Square-Regular.otf" format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "VP Pixel Simplified";
+  src: url "/app/src/assets/fonts/VPPixel-Simplified.otf" format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+/* */
+/* Global Vars *//*# sourceMappingURL=fonts.css.map */
