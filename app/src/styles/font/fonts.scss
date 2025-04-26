@@ -23,3 +23,11 @@ $nus-font: map-get($fonts, 'nus');
 $jet-font: map-get($fonts, 'jet');
 $sqr-font: map-get($fonts, 'sqr');
 $vpp-font: map-get($fonts, 'vpp');
+
+/* Export */
+    :export {
+        @each $key, $f in $fonts {
+            #{unquote($key)}: #{nth($f, 1)};
+        }
+    }
+/* */

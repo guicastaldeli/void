@@ -1,7 +1,18 @@
 /* Fonts */
-    @import './font/fonts.scss';
-/* */
+@import './font/fonts.scss';
+
+/* Random Texts */
+@import './random-text/random-text.scss';
 
 html {
     font-family: $cas-font;
+    overflow: hidden;
+}
+
+html, body, #root {
+    width: 100%;
+    height: 100%;
+
+    margin: 0px;
+    padding: 0px;
 }

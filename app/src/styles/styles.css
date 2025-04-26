@@ -32,7 +32,29 @@
 }
 /* */
 /* Global Vars */
-/* */
+/* Export */
+:export {
+  cas: Cascadia Code, /app/src/assets/fonts/CascadiaCode.ttf;
+  nus: Nunito Sans Normal, /app/src/assets/fonts/NunitoSans_10pt_Condensed-Regular.ttf;
+  jet: JetBrains Mono Regular, /app/src/assets/fonts/JetBrainsMonoNL-Regular.ttf;
+  sqr: Square Regular, /app/src/assets/fonts/Square-Regular.otf;
+  vpp: VP Pixel Simplified, /app/src/assets/fonts/VPPixel-Simplified.otf;
+}
+
+/* Random Texts */
+.-text-container {
+  width: 100%;
+  height: 100%;
+}
+
 html {
   font-family: "Cascadia Code", "/app/src/assets/fonts/CascadiaCode.ttf";
+  overflow: hidden;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
 }/*# sourceMappingURL=styles.css.map */

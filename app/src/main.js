@@ -1,15 +1,12 @@
 import './styles/styles.css';
 
-import Text from './text.js';
+import RandomText from './random-text.js';
 import Void from './void.js';
 
 export default function Main() {
     return (
         <>
-            <p>Maina</p>
-
-            <Text />
-            <Void />
+            <RandomText />
         </>
     )
 }

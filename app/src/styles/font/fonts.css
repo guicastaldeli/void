@@ -30,4 +30,14 @@
   font-style: normal;
 }
 /* */
-/* Global Vars *//*# sourceMappingURL=fonts.css.map */
+/* Global Vars */
+/* Export */
+:export {
+  cas: Cascadia Code;
+  nus: Nunito Sans Normal;
+  jet: JetBrains Mono Regular;
+  sqr: Square Regular;
+  vpp: VP Pixel Simplified;
+}
+
+/* *//*# sourceMappingURL=fonts.css.map */
