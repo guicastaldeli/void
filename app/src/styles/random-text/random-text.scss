@@ -4,5 +4,10 @@
 }
 
 #--chars-el {
-    z-index: 9;
+    white-space: pre;
+    z-index: 8;
+
+    &::after {
+        content: '';
+    }
 }

@@ -4,5 +4,9 @@
 }
 
 #--chars-el {
-  z-index: 9;
+  white-space: pre;
+  z-index: 8;
+}
+#--chars-el::after {
+  content: "";
 }/*# sourceMappingURL=random-text.css.map */

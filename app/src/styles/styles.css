@@ -32,6 +32,7 @@
 }
 
 #--chars-el {
+  white-space: pre;
   z-index: 9;
 }
 

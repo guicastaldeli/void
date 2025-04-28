@@ -52,7 +52,7 @@ export default function RandomText() {
     }, [initalPos]);
     
     //Cursor Void
-        const [voidPos, setVoidPos] = useState({ 
+        const [voidState, setVoidState] = useState({
             left: 0,
             right: 0, 
             top: 0,
@@ -63,7 +63,7 @@ export default function RandomText() {
 
         useEffect(() => {
             const handleVoidUpdate = (e) => {
-                setVoidPos({
+                setVoidState({
                     left: e.detail.left,
                     right: e.detail.right,
                     top: e.detail.top,
@@ -78,7 +78,7 @@ export default function RandomText() {
         }, []);
 
         const checkColl = useCallback((cr) => {
-            if(!voidPos.isActive) return false;
+            if(!voidState.isActive) return false;
 
             const el = charsRef.current[cr.id];
             if(!el) return false;
@@ -86,10 +86,10 @@ export default function RandomText() {
             const charRect = el.getBoundingClientRect();
 
             const voidRect = {
-                left: voidPos.left,
-                right: voidPos.right,
-                top: voidPos.top,
-                bottom: voidPos.bottom
+                left: voidState.left,
+                right: voidState.right,
+                top: voidState.top,
+                bottom: voidState.bottom
             }
 
             const collision = !(
@@ -111,7 +111,7 @@ export default function RandomText() {
             const normalizedOverlap = overlapArea / charArea;
 
             return Math.pow(normalizedOverlap, 2);
-        }, [voidPos]);
+        }, [voidState]);
     //
 
     //Update
@@ -123,33 +123,29 @@ export default function RandomText() {
             }
 
             let updContent = cs.content;
-            
-            const char = genRandomChar();
-            const addChange = 0.3 + timeFactor.current * 2.0;
+            let hasDeleted = false;
 
-            if(voidPos.isActive && charsRef.current[cs.id]) {
+            if(voidState.isActive && charsRef.current[cs.id]) {
                 const element = charsRef.current[cs.id];
-                const charNodes = Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+                const charNodes = element.childNodes[0];
 
-                if(charNodes.length > 0) {
+                if(charNodes && charNodes.nodeType === Node.TEXT_NODE) {
+                    let contentArray = updContent.split('');
                     const range = document.createRange();
-                    let modifiedContent = updContent;
-                    let hasDeleted = false;
 
                     for(let i = 0; i < updContent.length; i++) {
-                        try {
-                            range.setStart(charNodes[0], i);
-                            range.setEnd(charNodes[0], i + 1);
-                            const charRect = range.getBoundingClientRect();
-                            
-                            const coll = checkColl(charRect);
+                        if(contentArray[i] === ' ') continue;
 
-                            if(coll) {
-                                modifiedContent = cs.dir === 'right'
-                                    ? modifiedContent.slice(0, i) + modifiedContent.slice(i + 1)
-                                    : modifiedContent.slice(0, i) + modifiedContent.slice(i + 1)
-                                ;
-                                i--;
+                        range.setStart(charNodes, i);
+                        range.setEnd(charNodes, i + 1);
+
+                        try {
+                            const charRect = range.getBoundingClientRect();
+                            const collisionX = charRect.right > voidState.left && charRect.left < voidState.right;
+                            const collisionY = charRect.bottom > voidState.top && charRect.top < voidState.bottom;
+
+                            if(collisionX && collisionY) {
+                                contentArray[i] = ' ';
                                 hasDeleted = true;
                             }
                         } catch(e) {
@@ -157,19 +153,27 @@ export default function RandomText() {
                         }
                     }
 
-                    if(hasDeleted && onDeleted) onDeleted();
-                    updContent = modifiedContent;
-
-                    if(updContent.length === 0) return null;
+                    updContent = contentArray.join('');
                 }
             }
 
+            //Add new chars
+            const char = genRandomChar();
+            const addChange = 0.3 + timeFactor.current * 2.0;
             if(updContent.length < currentMaxLength && Math.random() < addChange) {
                 updContent = cs.dir === 'right' 
                     ? updContent + char 
                     : char + updContent
                 ;
             }
+
+            if(hasDeleted && onDeleted) {
+                requestAnimationFrame(() => {
+                    onDeleted();
+                });
+            }
+            
+            if(updContent.trim().length === 0) return null;
 
             return {
                 ...cs,
@@ -178,7 +182,7 @@ export default function RandomText() {
                 maxLength: currentMaxLength,
                 isColliding: collStrength > 0,
             }
-        }, [initalPos, genRandomChar]);
+        }, [initalPos, genRandomChar, voidState]);
         
         const updateChar = useCallback(() => {
             timePassed.current += config.initialSpeed;
@@ -192,7 +196,7 @@ export default function RandomText() {
 
                 const updated = prev.map(cs => {
                     const collStrength = checkColl(cs);
-                    return updateCharPos(cs, currentMaxLength, collStrength, voidPos.onDeleted);
+                    return updateCharPos(cs, currentMaxLength, collStrength, voidState.onDeleted);
                 }).filter(cs => cs !== null && cs.content.length > 0);
         
                 if(Math.random() < spawnRate && updated.length < config.maxCharStreams) {
@@ -201,13 +205,58 @@ export default function RandomText() {
         
                 return updated;
             });
-        }, [checkColl, updateCharPos, initalPos, voidPos.onDeleted]);
+        }, [checkColl, updateCharPos, initalPos, voidState.onDeleted]);
+    //
+
+    //Color
+        const initalColor = 'rgb(50, 168, 82)';
+        const finalColor = 'rgb(170, 58, 58)';
+
+        const [voidColor, setVoidColor] = useState({
+            color: initalColor,
+            progress: 0
+        });
+
+        const interpolateColor = useCallback((c1, c2, f) => {
+            if(f <= 0) return c1;
+            if(f >= 1) return c2;
+
+            const fColor = c1.match(/\d+/g).map(Number);
+            const sColor = c2.match(/\d+/g).map(Number);
+
+            //Color
+            const r = Math.round(fColor[0] + (sColor[0] - fColor[0]) * f);
+            const g = Math.round(fColor[1] + (sColor[1] - fColor[1]) * f);
+            const b = Math.round(fColor[2] + (sColor[2] - fColor[2]) * f);
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }, []);
+
+        useEffect(() => {
+            const handleVoidStatusUpdate = (e) => {
+                if(!e.detail) return;
+
+                requestAnimationFrame(() => {
+                    setVoidColor({
+                        color: interpolateColor(initalColor, finalColor, e.detail.progress),
+                        progress: e.detail.progress
+                    });
+                });
+            }
+
+            window.addEventListener('voidStatusUpdate', handleVoidStatusUpdate);
+            return () => window.removeEventListener('voidStatusUpdate', handleVoidStatusUpdate);
+        }, [interpolateColor]);
+
+        const getCharColor = useCallback(() => {
+            return voidColor?.color || initalColor;
+        }, [voidColor.color]);
     //
 
     useEffect(() => {
         const interval = setInterval(updateChar, config.initialSpeed);
         return () => clearInterval(interval);
-    }, [updateChar, config.initialSpeed, voidPos.onDeleted]);
+    }, [updateChar, config.initialSpeed, voidState.onDeleted]);
 
     useEffect(() => {
         return () => { charsRef.current = {} }
@@ -231,7 +280,8 @@ export default function RandomText() {
                             top: `${cs.y * 100}%`,
                             fontSize: `${cs.size}px`,
                             fontFamily: cs.font,
-                            border: cs.isColliding ? '1px solid red' : 'transparent',
+                            color: getCharColor(),
+                            transition: 'color 0.3 ease'
                         }}
                     >
                         {cs.content}

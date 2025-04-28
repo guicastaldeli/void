@@ -1,7 +1,4 @@
 .void {
-  position: fixed;
-  background-color: black;
-}
-.void.active {
-  background-color: green;
+  position: absolute;
+  z-index: 9;
 }/*# sourceMappingURL=cursor-void.css.map */
