@@ -5,8 +5,10 @@
 @import './random-text/random-text.scss';
 
 html {
-    font-family: $cas-font;
+    font-family: $jet-font;
     overflow: hidden;
+
+    user-select: none;
 }
 
 html, body, #root {
@@ -15,4 +17,9 @@ html, body, #root {
 
     margin: 0px;
     padding: 0px;
+}
+
+#root {
+    transform-origin: center center;
+    transform: scale(1);
 }

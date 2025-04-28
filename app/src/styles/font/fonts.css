@@ -2,31 +2,16 @@
 @font-face {
   font-family: "Cascadia Code";
   src: url "/app/src/assets/fonts/CascadiaCode.ttf" format("truetype");
-  font-weight: normal;
   font-style: normal;
 }
 @font-face {
-  font-family: "Nunito Sans Normal";
-  src: url "/app/src/assets/fonts/NunitoSans_10pt_Condensed-Regular.ttf" format("truetype");
-  font-weight: normal;
+  font-family: "JetBrains Mono NL ExtraBold";
+  src: url "/app/src/assets/fonts/JetBrainsMonoNL-ExtraBold.ttf" format("truetype");
   font-style: normal;
 }
 @font-face {
-  font-family: "JetBrains Mono Regular";
-  src: url "/app/src/assets/fonts/JetBrainsMonoNL-Regular.ttf" format("truetype");
-  font-weight: normal;
-  font-style: normal;
-}
-@font-face {
-  font-family: "Square Regular";
-  src: url "/app/src/assets/fonts/Square-Regular.otf" format("truetype");
-  font-weight: normal;
-  font-style: normal;
-}
-@font-face {
-  font-family: "VP Pixel Simplified";
-  src: url "/app/src/assets/fonts/VPPixel-Simplified.otf" format("truetype");
-  font-weight: normal;
+  font-family: "Fira Code SemiBold";
+  src: url "/app/src/assets/fonts/FiraCode-VariableFont_wght.ttf" format("truetype");
   font-style: normal;
 }
 /* */
@@ -34,10 +19,8 @@
 /* Export */
 :export {
   cas: Cascadia Code;
-  nus: Nunito Sans Normal;
-  jet: JetBrains Mono Regular;
-  sqr: Square Regular;
-  vpp: VP Pixel Simplified;
+  jet: JetBrains Mono NL ExtraBold;
+  fir: Fira Code SemiBold;
 }
 
 /* *//*# sourceMappingURL=fonts.css.map */

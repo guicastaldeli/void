@@ -1,3 +1,3 @@
-- day / night cycle
-- void mouse
+- day / night cycle (when void grows)
 - fix css resolution
+- fog

@@ -1,0 +1,7 @@
+.void {
+  position: fixed;
+  background-color: black;
+}
+.void.active {
+  background-color: green;
+}/*# sourceMappingURL=cursor-void.css.map */
