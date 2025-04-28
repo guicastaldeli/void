@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React from 'react';
+import debounce from 'lodash.debounce';
 import fontsData from './styles/font/fonts.scss';
 
 export default function RandomText() {
@@ -11,11 +13,11 @@ export default function RandomText() {
 
     //Config
     const config = useMemo(() => ({
-        initialSpeed: 50,
+        initialSpeed: 1,
         maxCharStreams: 150,
         maxLengthText: 80,
-        spawnRate: 0.0002,
-        speedRange: [0.005, 0.001],
+        spawnRate: 0.0001,
+        speedRange: [0.001, 0.0005],
         initialStreamLength: 5,
         sizeRange: [5, 50]
     }), []);
@@ -118,7 +120,7 @@ export default function RandomText() {
         const updateCharPos = useCallback((cs, currentMaxLength, collStrength, onDeleted) => {
             const updX = cs.dir === 'right' ? cs.x + cs.speed : cs.x - cs.speed;
 
-            if((cs.dir === 'right' && updX > 1.2) || (cs.dir === 'left' && updX < -0.2)) {
+            if((cs.dir === 'right' && updX > 2.0) || (cs.dir === 'left' && updX < -1.0)) {
                 return initalPos();
             }
 
@@ -132,9 +134,11 @@ export default function RandomText() {
                 if(charNodes && charNodes.nodeType === Node.TEXT_NODE) {
                     let contentArray = updContent.split('');
                     const range = document.createRange();
+                    const charLength = charNodes.length;
 
                     for(let i = 0; i < updContent.length; i++) {
                         if(contentArray[i] === ' ') continue;
+                        if(i >= charLength) continue;
 
                         range.setStart(charNodes, i);
                         range.setEnd(charNodes, i + 1);
@@ -159,8 +163,8 @@ export default function RandomText() {
 
             //Add new chars
             const char = genRandomChar();
-            const addChange = 0.3 + timeFactor.current * 2.0;
-            if(updContent.length < currentMaxLength && Math.random() < addChange) {
+            const addChance = timeFactor.current / 5;
+            if(updContent.length < currentMaxLength && Math.random() < addChance) {
                 updContent = cs.dir === 'right' 
                     ? updContent + char 
                     : char + updContent
@@ -172,7 +176,7 @@ export default function RandomText() {
                     onDeleted();
                 });
             }
-            
+
             if(updContent.trim().length === 0) return null;
 
             return {
@@ -187,7 +191,7 @@ export default function RandomText() {
         const updateChar = useCallback(() => {
             timePassed.current += config.initialSpeed;
 
-            timeFactor.current = Math.min(timePassed.current / 500, 1);
+            timeFactor.current = Math.min(timePassed.current / 1000, 1);
             const currentMaxLength = 5 + Math.floor(timeFactor.current * config.maxLengthText);
             const spawnRate = config.spawnRate + timeFactor.current * 0.1;
 
@@ -248,44 +252,75 @@ export default function RandomText() {
             return () => window.removeEventListener('voidStatusUpdate', handleVoidStatusUpdate);
         }, [interpolateColor]);
 
-        const getCharColor = useCallback(() => {
+        const setCharColor = useCallback(() => {
             return voidColor?.color || initalColor;
         }, [voidColor.color]);
     //
 
     useEffect(() => {
-        const interval = setInterval(updateChar, config.initialSpeed);
-        return () => clearInterval(interval);
-    }, [updateChar, config.initialSpeed, voidState.onDeleted]);
+        let animationFrameId;
+        let lastTime = performance.now();
+        const targetFPS = 30;
+        const targetFrameDuration = 1000 / targetFPS;
+        let accumulatedTime = 0;
+
+        const _animate = (currentTime) => {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            accumulatedTime += deltaTime;
+
+            while(accumulatedTime >= targetFrameDuration) {
+                updateChar();
+                accumulatedTime -= targetFrameDuration;
+            }
+
+            animationFrameId = requestAnimationFrame(_animate);
+        }
+
+        animationFrameId = requestAnimationFrame(_animate);
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [updateChar, config.initialSpeed]);
 
     useEffect(() => {
         return () => { charsRef.current = {} }
     }, []);
 
+    const setCharEl = useCallback((id) => (el) => {
+        if(el) charsRef.current[id] = el;
+        else delete charsRef.current[id];
+    }, []);
+
+    const CharEl = React.memo(({ cs }) => {
+        return (
+            <span 
+                id='--chars-el'
+                key={cs.id} 
+                ref={ setCharEl(cs.id) }
+
+                style={{
+                    position: 'absolute',
+                    left: `${cs.x * 100}%`,
+                    top: `${cs.y * 100}%`,
+                    fontSize: `${cs.size}px`,
+                    fontFamily: cs.font,
+                    color: setCharColor(),
+                    transition: 'color 0.3s ease'
+                }}
+            >
+                {cs.content}
+            </span>
+        );
+    }, (prev, next) => {
+        const keys = ['x', 'y', 'content', 'size', 'font'];
+        return keys.every(key => prev.cs[key] === next.cs[key]);
+    });
+
     //Main...
     return (
         <>
             <div className='-chars-container'>
-                {chars.map((cs) => (
-                    <span id='--chars-el' 
-                        key={cs.id} 
-                        ref={(el) => {
-                            if(el) charsRef.current[cs.id] = el;
-                            else delete charsRef.current[cs.id];
-                        }}
-
-                        style={{
-                            position: 'absolute',
-                            left: `${cs.x * 100}%`,
-                            top: `${cs.y * 100}%`,
-                            fontSize: `${cs.size}px`,
-                            fontFamily: cs.font,
-                            color: getCharColor(),
-                            transition: 'color 0.3 ease'
-                        }}
-                    >
-                        {cs.content}
-                    </span>
+                {chars.map((c) => (
+                    <CharEl key={c.id} cs={c} />
                 ))}
             </div>
         </>

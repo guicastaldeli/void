@@ -85,7 +85,8 @@ export default function CursorVoid() {
 
     return (
         <>
-            <div className='void'
+            <div 
+                className='void'
                 ref={voidRef}
                 style={{
                     position: 'fixed',

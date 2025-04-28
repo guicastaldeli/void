@@ -33,7 +33,10 @@
 
 #--chars-el {
   white-space: pre;
-  z-index: 9;
+  z-index: 8;
+}
+#--chars-el::after {
+  content: "";
 }
 
 html {
@@ -44,7 +47,7 @@ html {
           user-select: none;
 }
 
-html, body, #root {
+html, body, #root, .container {
   width: 100%;
   height: 100%;
   margin: 0px;
