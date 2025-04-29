@@ -6,8 +6,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 export default function Main() {
     //Color
-        const initialColor = 'rgb(255, 255, 255)';
-        const finalColor = 'rgb(0, 0, 0)';
+        const initialColor = 'rgb(238, 238, 238)';
+        const finalColor = 'rgb(38, 38, 38)';
 
         const [voidColor, setVoidColor] = useState({
             color: initialColor,

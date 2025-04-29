@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import React from 'react';
-import debounce from 'lodash.debounce';
 import fontsData from './styles/font/fonts.scss';
 
 export default function RandomText() {
@@ -19,7 +18,11 @@ export default function RandomText() {
         spawnRate: 0.0001,
         speedRange: [0.001, 0.0005],
         initialStreamLength: 5,
-        sizeRange: [5, 50]
+        sizeRange: [5, 50],
+        fogDensity: 2.5,
+        fogColor: 'rgb(0, 0, 0)',
+        nearDistance : 0.2,
+        farDistance: 0.8
     }), []);
 
     //Random Char
@@ -129,19 +132,19 @@ export default function RandomText() {
 
             if(voidState.isActive && charsRef.current[cs.id]) {
                 const element = charsRef.current[cs.id];
-                const charNodes = element.childNodes[0];
+                const range = document.createRange();
+                const charNode = element.childNodes[0];
 
-                if(charNodes && charNodes.nodeType === Node.TEXT_NODE) {
+                if(charNode && charNode.nodeType === Node.TEXT_NODE) {
                     let contentArray = updContent.split('');
-                    const range = document.createRange();
-                    const charLength = charNodes.length;
+                    const charLength = charNode.length;
 
                     for(let i = 0; i < updContent.length; i++) {
                         if(contentArray[i] === ' ') continue;
                         if(i >= charLength) continue;
 
-                        range.setStart(charNodes, i);
-                        range.setEnd(charNodes, i + 1);
+                        range.setStart(charNode, i);
+                        range.setEnd(charNode, i + 1);
 
                         try {
                             const charRect = range.getBoundingClientRect();
@@ -191,7 +194,7 @@ export default function RandomText() {
         const updateChar = useCallback(() => {
             timePassed.current += config.initialSpeed;
 
-            timeFactor.current = Math.min(timePassed.current / 1000, 1);
+            timeFactor.current = Math.min(timePassed.current / 100, 1);
             const currentMaxLength = 5 + Math.floor(timeFactor.current * config.maxLengthText);
             const spawnRate = config.spawnRate + timeFactor.current * 0.1;
 
@@ -213,8 +216,8 @@ export default function RandomText() {
     //
 
     //Color
-        const initalColor = 'rgb(50, 168, 82)';
-        const finalColor = 'rgb(170, 58, 58)';
+        const initalColor = 'rgb(33, 33, 33)';
+        const finalColor = 'rgb(210, 210, 210)';
 
         const [voidColor, setVoidColor] = useState({
             color: initalColor,
@@ -259,52 +262,59 @@ export default function RandomText() {
 
     useEffect(() => {
         let animationFrameId;
-        let lastTime = performance.now();
-        const targetFPS = 30;
-        const targetFrameDuration = 1000 / targetFPS;
-        let accumulatedTime = 0;
 
-        const _animate = (currentTime) => {
-            const deltaTime = currentTime - lastTime;
-            lastTime = currentTime;
-            accumulatedTime += deltaTime;
-
-            while(accumulatedTime >= targetFrameDuration) {
-                updateChar();
-                accumulatedTime -= targetFrameDuration;
-            }
-
+        const _animate = () => {
+            updateChar();
             animationFrameId = requestAnimationFrame(_animate);
         }
-
         animationFrameId = requestAnimationFrame(_animate);
         return () => cancelAnimationFrame(animationFrameId);
-    }, [updateChar, config.initialSpeed]);
+    }, [updateChar]);
 
     useEffect(() => {
         return () => { charsRef.current = {} }
     }, []);
+
+    //Fog
+    const calcFog = useCallback((yPos) => {
+        const depth = Math.min(Math.max(yPos, 0), 1);
+        const fogFactor = Math.exp(-config.fogDensity * Math.max(0, depth - config.nearDistance));
+        return Math.min(Math.max(fogFactor, 0), 1);
+    }, [config.fogDensity, config.nearDistance]);
 
     const setCharEl = useCallback((id) => (el) => {
         if(el) charsRef.current[id] = el;
         else delete charsRef.current[id];
     }, []);
 
-    const CharEl = React.memo(({ cs }) => {
+    const RenderChars = React.memo(({ cs }) => {
+        const fogOpacity = calcFog(cs.x);
+        const charColor = setCharColor();
+
+        const blendedColor = `
+            rgba(
+                ${parseInt(charColor.slice(4, -1).split(', ')[0])},
+                ${parseInt(charColor.slice(4, -1).split(', ')[1])},
+                ${parseInt(charColor.slice(4, -1).split(', ')[2])},
+                ${fogOpacity}
+            )
+        `;
+        
         return (
             <span 
                 id='--chars-el'
                 key={cs.id} 
                 ref={ setCharEl(cs.id) }
-
                 style={{
                     position: 'absolute',
                     left: `${cs.x * 100}%`,
                     top: `${cs.y * 100}%`,
                     fontSize: `${cs.size}px`,
                     fontFamily: cs.font,
-                    color: setCharColor(),
-                    transition: 'color 0.3s ease'
+                    color: blendedColor,
+                    opacity: fogOpacity,
+                    transition: 'color 0.3s ease',
+                    textShadow: `0px 5px ${5 * (15 - fogOpacity)}px rgba(0, 0, 0, ${5 * fogOpacity})`
                 }}
             >
                 {cs.content}
@@ -320,7 +330,7 @@ export default function RandomText() {
         <>
             <div className='-chars-container'>
                 {chars.map((c) => (
-                    <CharEl key={c.id} cs={c} />
+                    <RenderChars key={c.id} cs={c} />
                 ))}
             </div>
         </>
