@@ -299,6 +299,12 @@ export default function RandomText() {
                 ${fogOpacity}
             )
         `;
+
+        const textShadow = fogOpacity > 0.5 ? `0 1px 2px rgba(0, 0, 0, ${fogOpacity * 0.5})` : 'none';
+
+        const blur = `
+            blur(${(1 - fogOpacity) * 1.5}px)
+        `;
         
         return (
             <span 
@@ -314,7 +320,8 @@ export default function RandomText() {
                     color: blendedColor,
                     opacity: fogOpacity,
                     transition: 'color 0.3s ease',
-                    textShadow: `0px 5px ${5 * (15 - fogOpacity)}px rgba(0, 0, 0, ${5 * fogOpacity})`
+                    textShadow: textShadow,
+                    filter: blur,
                 }}
             >
                 {cs.content}

@@ -1,3 +1,5 @@
-- day / night cycle (when void grows)
 - fix css resolution
-- fog
+- particles
+- change void style
+- fix other things
+- solve lag when void grows
