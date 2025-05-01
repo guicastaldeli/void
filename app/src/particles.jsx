@@ -58,28 +58,32 @@ export default function Particles() {
     const setup = useCallback(() => {
         //Canvas
             const canvas = canvasRef.current;
-            if(!canvas || !ctx) return;
+            if(!canvas) return null;
         //
 
         const container = canvas.parentElement;
         const displayWidth = container.clientWidth;
         const displayHeight = container.clientHeight;
+
+        const zoom = window.visualViewport?.scale || 1;
+        const preciseZoom = Math.max(0.1, Math.min(zoom, 3));
         
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
 
         const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.round(displayWidth * dpr);
-        canvas.height = Math.round(displayHeight * dpr);
+        canvas.width = Math.round(displayWidth * dpr / preciseZoom);
+        canvas.height = Math.round(displayHeight * dpr / preciseZoom);
 
         //Ctx
             ctx.current = canvas.getContext('2d');
-            ctx.current.scale(dpr, dpr);
+            ctx.current.scale(dpr / preciseZoom, dpr / preciseZoom);
         //
 
         const updDimensions = {
             w: displayWidth,
-            h: displayHeight
+            h: displayHeight,
+            zoom: preciseZoom
         }
 
         dimensions.current = updDimensions;
@@ -106,7 +110,15 @@ export default function Particles() {
 
     //Animation
         const animate = useCallback(() => {
-            ctx.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            const canvas = canvasRef.current;
+            const width = canvas.width / (window.devicePixelRatio / (dimensions.current?.zoom || 1));
+            const height = canvas.height / (window.devicePixelRatio / (dimensions.current?.zoom || 1));
+
+            ctx.current.clearRect(
+                -1, -1,
+                width + 2,
+                height + 2
+            );
 
             for(let i = 0; i < particlesRef.current.length; i++) {
                 const p = particlesRef.current[i];
@@ -133,14 +145,24 @@ export default function Particles() {
 
     //Resize
         const resize = useCallback(() => {
-            const od = {...dimensions.current};
-            const updDimensions = setup();
-            const zoom = window.outerWidth / window.innerWidth;
+            if(zoomTimeout.current) clearTimeout(zoomTimeout.current);
 
-            particlesRef.current.forEach(p => {
-                p.x = (p.x / od.w) * updDimensions.w * zoom;
-                p.y = (p.y / od.h) * updDimensions.h * zoom;
-            });
+            zoomTimeout.current = setTimeout(() => {
+                const updDimensions = setup();
+                if(!updDimensions) return;
+    
+                if(dimensions.current.w !== updDimensions.w || dimensions.current.h !== updDimensions.h) {
+                    const scaleX = updDimensions.w / dimensions.current.w;
+                    const scaleY = updDimensions.h / dimensions.current.h;
+
+                    particlesRef.current.forEach(p => {
+                        p.x *= scaleX;
+                        p.y *= scaleY;
+                    });
+                }
+
+                dimensions.current = updDimensions;
+            }, 100)
         }, [setup]);
     //
 
@@ -151,7 +173,8 @@ export default function Particles() {
         animate();
     
         //Resize
-            window.addEventListener('resize', resize)
+            window.addEventListener('resize', resize);
+            window.visualViewport?.addEventListener('resize', resize);
         //
 
         //Zoom

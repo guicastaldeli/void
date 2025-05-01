@@ -267,6 +267,7 @@ export default function RandomText() {
             updateChar();
             animationFrameId = requestAnimationFrame(_animate);
         }
+        
         animationFrameId = requestAnimationFrame(_animate);
         return () => cancelAnimationFrame(animationFrameId);
     }, [updateChar]);

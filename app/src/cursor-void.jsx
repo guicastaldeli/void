@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import './styles/cursor-void/cursor-void.scss'
+import './styles/cursor-void/cursor-void.scss';
 
 export default function CursorVoid() {
-    const [radius, setRadius] = useState(200);
+    const [radius, setRadius] = useState(100);
     const [deletedChars, setDeletedChars] = useState(0);
     const [isActive, setIsActive] = useState(true);
     const posRef = useRef({ x: 0, y: 0 });
     const voidRef = useRef(null);
     const animationRef = useRef({ id: null, lastDispatch: null });
 
-    const currentRadius = radius + Math.min(deletedChars * 0.5, 20);
+    const currentRadius = radius + Math.min(deletedChars * 0.5, 200);
 
     //Color
         const initialColor = 'rgb(0, 0, 0)';
@@ -65,8 +65,8 @@ export default function CursorVoid() {
         });
 
         //Color
-            const pInitalColor = 'rgb(181, 38, 38)';
-            const pFinalColor = 'rgb(40, 182, 71)';
+            const pInitalColor = 'rgb(74, 74, 74)';
+            const pFinalColor = 'rgb(193, 193, 193)';
             
             const getParticleColor = useCallback(() => {
                 if(colorProgress <= 0) return pInitalColor;
@@ -83,7 +83,7 @@ export default function CursorVoid() {
             }, [colorProgress]);
         //
 
-        const setupPartices = useCallback(() => {
+        const setupParticles = useCallback(() => {
             const canvas = canvasRef.current;
             if(!canvas) return;
 
@@ -104,77 +104,96 @@ export default function CursorVoid() {
 
         const initParticles = useCallback(() => {
             const particles = [];
-            const particlesCount = 150;
+            const particlesCount = 40;
 
             const voidRect = voidRef.current?.getBoundingClientRect() || {
-                left: 0, top: 0, width: 0, height: 0
+                left: 0, 
+                top: 0, 
+                width: currentRadius * 2, 
+                height: currentRadius * 2
             }
+
+            const centerX = voidRect.left + voidRect.width / 2;
+            const centerY = voidRect.top + voidRect.height / 2;
+            const radius = currentRadius * 0.8;
 
             for(let i = 0; i < particlesCount; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * currentRadius * 0.8;
+                const distance = Math.random() * radius;
 
                 particles.push({
-                    x: voidRect.left + voidRect.width / 2 + Math.cos(angle) * distance,
-                    y: voidRect.top + voidRect.height / 2 + Math.sin(angle) * distance,
+                    x: centerX + Math.cos(angle) * distance,
+                    y: centerY + Math.sin(angle) * distance,
+                    targetDistance: distance,
                     size: Math.random() * 3 + 1,
-                    speed: Math.random() * 0.5 + 0.1,
+                    speed: Math.random() * 2.5 + 0.1,
                     opacity: Math.random() * 0.5 + 0.3,
-                    life: 0,
+                    life: Math.random() * 100 + 50,
                     maxLife: Math.random() * 100 + 50
                 });
-
-                particlesRef.current = particles;
             }
-        }, []);
+
+            particlesRef.current = particles;
+        }, [currentRadius]);
 
         const animateParticles = useCallback(() => {
-            if(!ctx.current || !voidArea.current.isActive) {
+            if(!ctx.current) {
                 particlesAnimationId.current = requestAnimationFrame(animateParticles);
                 return;
             }
 
-            ctx.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            ctx.current.clearRect(
+                -1, -1, 
+                canvasRef.current.width / window.devicePixelRatio, 
+                canvasRef.current.height / window.devicePixelRatio
+            );
 
-            const voidWidth = voidArea.current.right - voidArea.current.left;
-            const voidHeight = voidArea.current.bottom - voidArea.current.top;
-            const voidCenterX = voidArea.current.left + voidWidth / 2;
-            const voidCenterY = voidArea.current.top + voidHeight / 2;
-
-            for(let i = 0; i < particlesRef.current.length; i++) {
-                const p = particlesRef.current[i];
-                const canvasX = p.x - voidArea.current.left;
-                const canvasY = p.y - voidArea.current.top;
-
-                if(p.life <= 0 ||
-                    p.x < voidArea.current.left || p.x > voidArea.current.right ||
-                    p.y < voidArea.current.top || p.y > voidArea.current.bottom
-                ) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = Math.random() * Math.min(voidWidth, voidHeight) * 0.4;
-
-                    p.x = voidCenterX + Math.cos(angle) * distance;
-                    p.y = voidCenterY + Math.sin(angle) * distance;
-                    p.life = p.maxLife;
-                    p.opacity = Math.random() * 0.5 + 0.3;
-                } else {
-                    p.x += (Math.random() - 0.5) * p.speed;
-                    p.y += (Math.random() - 0.5) * p.speed;
-                    p.life--;
-                    p.opacity = (p.life / p.maxLife) * 0.5 + 0.1;
+            if(voidArea.current.isActive) {
+                const voidWidth = voidArea.current.right - voidArea.current.left;
+                const voidHeight = voidArea.current.bottom - voidArea.current.top;
+                const voidCenterX = voidArea.current.left + voidWidth / 2;
+                const voidCenterY = voidArea.current.top + voidHeight / 2;
+                const currentVoidRadius = Math.min(voidWidth, voidHeight) * 0.4;
+    
+                for(let i = 0; i < particlesRef.current.length; i++) {
+                    const p = particlesRef.current[i];
+    
+                    const canvasX = p.x - voidArea.current.left;
+                    const canvasY = p.y - voidArea.current.top;
+    
+                    const dx = p.x - voidCenterX;
+                    const dy = p.y - voidCenterY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const targetDistance = p.targetDistance * (currentVoidRadius / (currentVoidRadius * 0.8));
+    
+                    if(p.life <= 0 || distance > currentVoidRadius) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const spawnDistance = Math.random() * Math.min(voidWidth, voidHeight) * 0.4;
+    
+                        p.x = voidCenterX + Math.cos(angle) * spawnDistance;
+                        p.y = voidCenterY + Math.sin(angle) * spawnDistance;
+                        p.life = p.maxLife;
+                        p.opacity = Math.random() * 0.5 + 0.3;
+                        p.targetDistance = spawnDistance;
+                    } else {    
+                        p.x += (Math.random() - 0.5) * p.speed;
+                        p.y += (Math.random() - 0.5) * p.speed;
+                        p.life--;
+                        p.opacity = (p.life / p.maxLife) * 0.5 + 0.1;
+                    }
+    
+                    //Color
+                    const [r, g, b] = getParticleColor().match(/\d+/g).map(Number);
+    
+                    //Draw
+                    ctx.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
+                    ctx.current.fillRect(
+                        canvasX - p.size / 2,
+                        canvasY - p.size / 2,
+                        p.size,
+                        p.size
+                    );
                 }
-
-                //Color
-                const [r, g, b] = getParticleColor().match(/\d+/g).map(Number);
-
-                //Draw
-                ctx.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-                ctx.current.fillRect(
-                    canvasX - p.size / 2,
-                    canvasY - p.size / 2,
-                    p.size,
-                    p.size
-                );
             }
 
             particlesAnimationId.current = requestAnimationFrame(animateParticles);
@@ -204,6 +223,7 @@ export default function CursorVoid() {
                     }
 
                     const particlesContainer = canvasRef?.current.parentElement;
+
                     if(particlesContainer) {
                         particlesContainer.style.left = left;
                         particlesContainer.style.top = top;
@@ -232,29 +252,32 @@ export default function CursorVoid() {
         posRef.current = { x: e.clientX, y: e.clientY };
     }, []);
 
-    useEffect(() => {
-        const left = `${posRef.current.x - currentRadius}px`;
-        const top = `${posRef.current.y - currentRadius}px`;
+    //Init...
+        useEffect(() => {
+            const left = `${posRef.current.x - currentRadius}px`;
+            const top = `${posRef.current.y - currentRadius}px`;
 
-        if(voidRef.current) {
-            voidRef.current.style.left = left;
-            voidRef.current.style.top = top;
-        }
+            if(voidRef.current) {
+                voidRef.current.style.left = left;
+                voidRef.current.style.top = top;
+            }
 
-        animationRef.current.id = requestAnimationFrame(updateCursor);
-        window.addEventListener('mousemove', handleMouseMove);
+            animationRef.current.id = requestAnimationFrame(updateCursor);
+            window.addEventListener('mousemove', handleMouseMove);
 
-        //Init Particles
-        setupPartices();
-        initParticles();
-        particlesAnimationId.current = requestAnimationFrame(animateParticles);
+            //Init Particles
+                setupParticles();
+                initParticles();
+                animateParticles();
+            //
 
-        return () => {
-            if(animationRef.current.id) cancelAnimationFrame(animationRef.current.id);
-            if(particlesAnimationId.current) cancelAnimationFrame(particlesAnimationId.current);
-            window.removeEventListener('mousemove', handleMouseMove);
-        }
-    }, [updateCursor, handleMouseMove, setupPartices, initParticles, animateParticles]);
+            return () => {
+                if(animationRef.current.id) cancelAnimationFrame(animationRef.current.id);
+                cancelAnimationFrame(particlesAnimationId.current);
+                window.removeEventListener('mousemove', handleMouseMove);
+            }
+        }, [updateCursor, handleMouseMove, initParticles, setupParticles, animateParticles]);
+    //
 
     //Main...
     return (

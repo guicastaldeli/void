@@ -1,3 +1,0 @@
-- fix css resolution
-- fix other things
-- fix the particles void updating

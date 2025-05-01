@@ -51,11 +51,41 @@ export default function Main() {
         }, [voidColor.color]);
     //
 
+    //Zoom
+        const [zoom, setZoom] = useState({
+            scale: 1,
+            originX: 0,
+            originY: 0
+        });
+
+        const handleWheel = useCallback((e) => {
+            if(e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                const delta = -e.deltaY * 0.001;
+                const newScale = Math.min(Math.max(0.5, zoom + delta), 3);
+
+                const rect = e.currentTarget.getBoundingClientRect();
+
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const originX = (mouseX - rect.width) * 100;
+                const originY = (mouseY - rect.height) * 100;
+
+                e.currentTarget.style.transformOrigin = `${originX}% ${originY}%`;
+                setZoom(newScale);
+            }
+        }, [zoom]);
+    //
+
     return (
-        <div className='container' 
+        <div 
+            className='container'
+            onWheel={handleWheel}
             style={{ 
                 backgroundColor: setBgColor(),
-                transition: 'background-color 0.3s ease' 
+                transition: 'background-color 0.3s ease',
+                transform: `scale(${zoom})`
             }}>
 
             
