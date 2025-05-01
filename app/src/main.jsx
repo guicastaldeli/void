@@ -88,7 +88,7 @@ export default function Main() {
                 transform: `scale(${zoom})`
             }}>
 
-            
+            <RandomText />
             <CursorVoid />
             <Particles />
         </div>
