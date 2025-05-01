@@ -143,7 +143,7 @@ export default function CursorVoid() {
             }
 
             ctx.current.clearRect(
-                -1, -1, 
+                0, 0, 
                 canvasRef.current.width / window.devicePixelRatio, 
                 canvasRef.current.height / window.devicePixelRatio
             );
