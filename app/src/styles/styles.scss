@@ -1,8 +1,8 @@
-/* Fonts */
-@import './font/fonts.scss';
-
-/* Random Texts */
-@import './random-text/random-text.scss';
+/* Imports */
+@import url('./font/fonts.scss');
+@import url('./random-text/random-text.scss');
+@import url('./cursor-void/cursor-void.scss');
+@import url('./particles/particles.scss');
 
 html {
     font-family: $jet-font;

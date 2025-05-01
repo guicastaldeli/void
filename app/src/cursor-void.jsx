@@ -7,7 +7,7 @@ export default function CursorVoid() {
     const [deletedChars, setDeletedChars] = useState(0);
     const [isActive, setIsActive] = useState(true);
     const voidRef = useRef(null);
-    const animationRef = useRef(null);
+    const animationRef = useRef({ id: null, lastDispatch: null });
 
     const currentRadius = radius + Math.min(deletedChars * 0.5, 200);
 
@@ -53,23 +53,32 @@ export default function CursorVoid() {
     const updateCursor = useCallback(() => {
         if(!voidRef.current) return;
 
-        voidRef.current.style.left = `${posRef.current.x - currentRadius}px`;
-        voidRef.current.style.top = `${posRef.current.y - currentRadius}px`;
+        const left = `${posRef.current.x - currentRadius}px`;
+        const top = `${posRef.current.y - currentRadius}px`;
 
-        const rect = voidRef.current.getBoundingClientRect();
-            
-        window.dispatchEvent(new CustomEvent('cursorUpdate', {
-            detail: {
-                left: rect.left,
-                right: rect.right,
-                top: rect.top,
-                bottom: rect.bottom,
-                isActive: isActive,
-                onDeleted: () => setDeletedChars(c => c + 1)
+        if(voidRef.current.style.left !== left || voidRef.current.style.top !== top) {
+            voidRef.current.style.left = left;
+            voidRef.current.style.top = top;
+
+            const rect = voidRef.current.getBoundingClientRect();
+
+            if(!animationRef.current.lastDispatch || performance.now() - animationRef.current.lastDispatch > 16) {
+                window.dispatchEvent(new CustomEvent('cursorUpdate', {
+                    detail: {
+                        left: rect.left,
+                        right: rect.right,
+                        top: rect.top,
+                        bottom: rect.bottom,
+                        isActive: isActive,
+                        onDeleted: () => setDeletedChars(c => c + 1)
+                    }
+                }));
+
+                animationRef.current.lastDispatch = performance.now();
             }
-        }));
+        }
 
-        animationRef.current = requestAnimationFrame(updateCursor);
+        animationRef.current.id = requestAnimationFrame(updateCursor);
     }, [isActive, currentRadius]);
 
     const handleMouseMove = useCallback((e) => {
@@ -77,16 +86,19 @@ export default function CursorVoid() {
     }, []);
 
     useEffect(() => {
+        const left = `${posRef.current.x - currentRadius}px`;
+        const top = `${posRef.current.y - currentRadius}px`;
+
         if(voidRef.current) {
-            voidRef.current.style.left = `${posRef.current.x - currentRadius}px`;
-            voidRef.current.style.top = `${posRef.current.y - currentRadius}px`;
+            voidRef.current.style.left = left;
+            voidRef.current.style.top = top;
         }
 
-        animationRef.current = requestAnimationFrame(updateCursor);
+        animationRef.current.id = requestAnimationFrame(updateCursor);
         window.addEventListener('mousemove', handleMouseMove);
 
         return () => {
-            cancelAnimationFrame(animationRef.current);
+            if(animationRef.current.id) cancelAnimationFrame(animationRef.current.id);
             window.removeEventListener('mousemove', handleMouseMove);
         }
     }, [updateCursor, handleMouseMove]);

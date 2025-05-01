@@ -1,8 +1,9 @@
+import { useCallback, useEffect, useState } from 'react';
 import './styles/styles.css';
 
 import RandomText from './random-text.jsx';
 import CursorVoid from './cursor-void.jsx';
-import { useCallback, useEffect, useState } from 'react';
+import Particles from './particles.jsx';
 
 export default function Main() {
     //Color
@@ -58,8 +59,9 @@ export default function Main() {
                     transition: 'background-color 0.3s ease' 
                 }}>
 
-                <RandomText />
+                
                 <CursorVoid />
+                <Particles />
             </div>
         </>
     )

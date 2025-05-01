@@ -15,7 +15,7 @@ export default function RandomText() {
         initialSpeed: 1,
         maxCharStreams: 150,
         maxLengthText: 80,
-        spawnRate: 0.0001,
+        spawnRate: 0.02,
         speedRange: [0.001, 0.0005],
         initialStreamLength: 5,
         sizeRange: [5, 50],
@@ -194,7 +194,7 @@ export default function RandomText() {
         const updateChar = useCallback(() => {
             timePassed.current += config.initialSpeed;
 
-            timeFactor.current = Math.min(timePassed.current / 100, 1);
+            timeFactor.current = Math.min(timePassed.current / 50, 1);
             const currentMaxLength = 5 + Math.floor(timeFactor.current * config.maxLengthText);
             const spawnRate = config.spawnRate + timeFactor.current * 0.1;
 

@@ -1,5 +1,3 @@
 - fix css resolution
-- particles
 - change void style
 - fix other things
-- solve lag when void grows
