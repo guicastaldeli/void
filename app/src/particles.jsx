@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import './styles/particles/particles.scss';
 
 export default function Particles() {
-    const canvasRef = useRef(null);
-    const particlesRef = useRef([]);
     const dimensions = useRef({ w: 0, h: 0 });
-    let animationId;
-
+    const canvasRef = useRef(null);
+    const ctx = useRef(null);
+    const particlesRef = useRef([]);
+    const animationId = useRef(null);
+    const zoomTimeout = useRef(null);
     
     //Color
         const initialColor = 'rgb(185, 185, 185)';
@@ -26,10 +27,15 @@ export default function Particles() {
 
             //Color
             const r = Math.round(fColor[0] + (sColor[0] - fColor[0]) * f);
-            const g = Math.round(fColor[1] + (sColor[1] - sColor[1]) * f);
-            const b = Math.round(fColor[2] + (sColor[2] - sColor[2]) * f);
+            const g = Math.round(fColor[1] + (sColor[1] - fColor[1]) * f);
+            const b = Math.round(fColor[2] + (sColor[2] - fColor[2]) * f);
 
             return `rgb(${r}, ${g}, ${b})`;
+        }, []);
+
+        const setParticleColor = useCallback(() => {
+            const color = voidColor?.color || initialColor;
+            return color.match(/\d+/g).map(Number);
         }, []);
 
         useEffect(() => {
@@ -47,122 +53,126 @@ export default function Particles() {
             window.addEventListener('voidStatusUpdate', handleVoidStatusUpdate);
             return () => window.removeEventListener('voidStatusUpdate', handleVoidStatusUpdate);
         }, [interpolateColor]);
-
-        const setParticleColor = useCallback(() => {
-            const color = voidColor?.color || initialColor;
-            return color.match(/\d+/g).map(Number);
-        }, [voidColor.color]);
     //
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-
-        const setup = () => {
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
-
-            ctx.scale(dpr, dpr);
-
-            dimensions.current = {
-                w: rect.width,
-                h: rect.height
-            }
-
-            return dimensions.current;
-        }
-
-        const init = (w, h) => {
-            const particles = [];
-            const particleCount = 100;
-
-            for(let i = 0; i < particleCount; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 5 + 2,
-                    speed: Math.random() * 1 + 0.5,
-                    opacity: Math.random() * 0.5 + 0.5,
-                    sway: Math.random() * 1
-                });
-            }
-
-            return particles;
-        }
-
-        //Animation
-            const animate = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                for(let i = 0; i < particlesRef.current.length; i++) {
-                    const p = particlesRef.current[i];
-
-                    p.y += p.speed;
-                    p.x += Math.sin(p.y * 0.01) * p.sway;
-
-                    if(p.y > dimensions.current.h) {
-                        p.y = 0;
-                        p.x = Math.random() * dimensions.current.w;
-                    }
-
-                    //Color
-                    const [r, g, b] = setParticleColor();
-
-                    //Draw
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-                    ctx.fillRect(p.x - p.size, p.y - p.size, p.size, p.size);
-                }
-
-                animationId = requestAnimationFrame(animate);
-            }
-
-            animate();
+    const setup = useCallback(() => {
+        //Canvas
+            const canvas = canvasRef.current;
+            if(!canvas || !ctx) return;
         //
 
-        //Resize
-            const resize = () => {
-                const { w, h } = setup();
-                const ow = dimensions.current.w;
-                const oh = dimensions.current.h;
+        const container = canvas.parentElement;
+        const displayWidth = container.clientWidth;
+        const displayHeight = container.clientHeight;
+        
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
 
-                if(ow > 0 && oh > 0) {
-                    const scaleX = w / ow;
-                    const scaleY = h / oh;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(displayWidth * dpr);
+        canvas.height = Math.round(displayHeight * dpr);
 
-                    particlesRef.current.forEach(p => {
-                        p.x *= scaleX;
-                        p.y *= scaleY;
-                    });
-                }
-
-                dimensions.current = { w: w, h: h }
-            }
-
-            resize();
-            window.addEventListener('resize', resize);
+        //Ctx
+            ctx.current = canvas.getContext('2d');
+            ctx.current.scale(dpr, dpr);
         //
 
-        //Init
-        setup()
-        particlesRef.current = init(dimensions.current.w, dimensions.current.h);
-
-        return () => {
-            cancelAnimationFrame(animationId);
-            window.removeEventListener('resize', resize);
+        const updDimensions = {
+            w: displayWidth,
+            h: displayHeight
         }
+
+        dimensions.current = updDimensions;
+        return updDimensions;
     }, []);
 
+    const init = useCallback((w, h) => {
+        const particles = [];
+        const particleCount = 100;
+
+        for(let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvasRef.current.width,
+                y: Math.random() * canvasRef.current.height,
+                size: Math.random() * 5 + 2,
+                speed: Math.random() * 1 + 0.5,
+                opacity: Math.random() * 0.5 + 0.5,
+                sway: Math.random() * 1
+            });
+        }
+
+        return particles;
+    }, []);
+
+    //Animation
+        const animate = useCallback(() => {
+            ctx.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
+            for(let i = 0; i < particlesRef.current.length; i++) {
+                const p = particlesRef.current[i];
+
+                p.y += p.speed;
+                p.x += Math.sin(p.y * 0.01) * p.sway;
+
+                if(p.y > dimensions.current.h) {
+                    p.y = 0;
+                    p.x = Math.random() * dimensions.current.w;
+                }
+
+                //Color
+                const [r, g, b] = setParticleColor();
+
+                //Draw
+                ctx.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
+                ctx.current.fillRect(p.x - p.size, p.y - p.size, p.size, p.size);
+            }
+
+            animationId.current = requestAnimationFrame(animate);
+        }, [setParticleColor]);
+    //
+
+    //Resize
+        const resize = useCallback(() => {
+            const od = {...dimensions.current};
+            const updDimensions = setup();
+            const zoom = window.outerWidth / window.innerWidth;
+
+            particlesRef.current.forEach(p => {
+                p.x = (p.x / od.w) * updDimensions.w * zoom;
+                p.y = (p.y / od.h) * updDimensions.h * zoom;
+            });
+        }, [setup]);
+    //
+
+    //Init...
+    useEffect(() => {
+        const initDimensions = setup();
+        particlesRef.current = init(initDimensions.w, initDimensions.h);
+        animate();
+    
+        //Resize
+            window.addEventListener('resize', resize)
+        //
+
+        //Zoom
+            const zoom = () => {
+                clearTimeout(zoomTimeout.current);
+                zoomTimeout.current = setTimeout(resize, 100);
+            }
+
+            window.addEventListener('wheel', zoom, { passive: true });
+        //
+
+        return () => {
+            cancelAnimationFrame(animationId.current);
+            window.removeEventListener('resize', resize);
+        }
+    }, [animate, resize, init, setup]);
+
+    //Main...
     return (
-        <>
-            <div className="particles">
-                <canvas ref={canvasRef}></canvas>
-            </div>
-        </>
+        <div className="particles">
+            <canvas ref={canvasRef}></canvas>
+        </div>
     )
 }

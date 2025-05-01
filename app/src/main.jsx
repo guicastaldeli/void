@@ -52,17 +52,15 @@ export default function Main() {
     //
 
     return (
-        <>
-            <div className='container' 
-                style={{ 
-                    backgroundColor: setBgColor(),
-                    transition: 'background-color 0.3s ease' 
-                }}>
+        <div className='container' 
+            style={{ 
+                backgroundColor: setBgColor(),
+                transition: 'background-color 0.3s ease' 
+            }}>
 
-                
-                <CursorVoid />
-                <Particles />
-            </div>
-        </>
+            
+            <CursorVoid />
+            <Particles />
+        </div>
     )
 }

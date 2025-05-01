@@ -15,7 +15,7 @@ export default function RandomText() {
         initialSpeed: 1,
         maxCharStreams: 150,
         maxLengthText: 80,
-        spawnRate: 0.02,
+        spawnRate: 0.002,
         speedRange: [0.001, 0.0005],
         initialStreamLength: 5,
         sizeRange: [5, 50],
@@ -194,7 +194,7 @@ export default function RandomText() {
         const updateChar = useCallback(() => {
             timePassed.current += config.initialSpeed;
 
-            timeFactor.current = Math.min(timePassed.current / 50, 1);
+            timeFactor.current = Math.min(timePassed.current / 500, 1);
             const currentMaxLength = 5 + Math.floor(timeFactor.current * config.maxLengthText);
             const spawnRate = config.spawnRate + timeFactor.current * 0.1;
 
@@ -271,9 +271,13 @@ export default function RandomText() {
         return () => cancelAnimationFrame(animationFrameId);
     }, [updateChar]);
 
-    useEffect(() => {
-        return () => { charsRef.current = {} }
-    }, []);
+    //Clear
+        const clear = () => {
+            return () => charsRef.current = {}
+        }
+
+        clear();
+    //
 
     //Fog
     const calcFog = useCallback((yPos) => {
@@ -320,7 +324,6 @@ export default function RandomText() {
                     color: blendedColor,
                     opacity: fogOpacity,
                     transition: 'color 0.3s ease',
-                    textShadow: textShadow,
                     filter: blur,
                 }}
             >
@@ -334,12 +337,10 @@ export default function RandomText() {
 
     //Main...
     return (
-        <>
-            <div className='-chars-container'>
-                {chars.map((c) => (
-                    <RenderChars key={c.id} cs={c} />
-                ))}
-            </div>
-        </>
+        <div className='-chars-container'>
+            {chars.map((c) => (
+                <RenderChars key={c.id} cs={c} />
+            ))}
+        </div>
     )
 }
